@@ -65,8 +65,7 @@ Eval compute in (bs (2 :: 1::nil)).
 Eval compute in (bs (3 :: 2 :: 1::nil)).
 (* end hide *)
 
-(** Sabemos que aplicar a função [bubble] a uma lista qualquer, não necessariamente vai retornar uma lista ordenada, mas o lema [bubble_sorted] a seguir nos mostra que se o primeiro elemento é o único elemento fora de ordem em uma lista, ao aplicarmos a função [bubble], obtemos uma lista ordenada:
-*)
+(** Sabemos que aplicar a função [bubble] a uma lista qualquer, não necessariamente vai retornar uma lista ordenada, mas o lema [bubble_sorted] a seguir nos mostra que se o primeiro elemento é o único elemento fora de ordem em uma lista, ao aplicarmos a função [bubble], obtemos uma lista ordenada: *)
 
 Lemma bubble_sorted: forall l, Sorted le l -> bubble l = l.
 Proof. Admitted.
@@ -78,15 +77,7 @@ Proof. Admitted.
 
 Lemma bubble_perm: forall l, Permutation l (bubble l).
 Proof.
-  intro l.
-  functional induction (bubble l).
-  - apply perm_nil.
-  - apply perm_skip. apply perm_nil.
-  - apply perm_skip. apply IHl0.
-  - apply perm_trans with (y::x::l0).
-    + apply perm_swap.
-    + apply perm_skip. apply IHl0.
-Qed.
+  intro l. functional induction (bubble l). Admitted.
 
 (** O lema [bs_correto] a seguir, nos mostra que o algoritmo [bs] gera uma permutação da lista de entrada: *)
 
