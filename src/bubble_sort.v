@@ -5,8 +5,6 @@ Require Import ord_equiv.
 Require Import perm_equiv.
 (* end hide*)
 
-(** * O algoritmo BubbleSort *)
-
 (** Iniciaremos definindo a função [bubble] que recebe uma lista de naturais como argumento, e percorre esta lista comparando elementos consecutivos. Chamamos este processo de borbulhamento: *)
 
 Function bubble (l: list nat ) {measure length l} :=
