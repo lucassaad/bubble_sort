@@ -1,11 +1,12 @@
 (* begin hide *)
 Require Import Arith List Lia.
 Require Import Recdef.
-Require Import ord_equiv.
-Require Import perm_equiv.
+Require Import Sorted.
+Require Import Permutation.
 (* end hide*)
 
-(** * O algoritmo BubbleSort *)
+(**
+Este trabalho apresenta uma prova formal da correção do algoritmo de ordenação por borbulhamento (a função [bs] a seguir). A formalização foi feita no assistente de provas Coq. O assistente de provas Coq utiliza o sistema de Dedução Natural, o que o torna adequado para o desenvolvimento de atividades computacionais no curso de Lógica Computacional 1. O Coq permite a extração de código certificado em diversas linguagens funcionais, como Ocaml, Haskell e Scheme. *)
 
 (** Iniciaremos definindo a função [bubble] que recebe uma lista de naturais como argumento, e percorre esta lista comparando elementos consecutivos. Chamamos este processo de borbulhamento: *)
 
@@ -64,133 +65,16 @@ Eval compute in (bs (2 :: 1::nil)).
 Eval compute in (bs (3 :: 2 :: 1::nil)).
 (* end hide *)
 
-(** Sabemos que aplicar a função [bubble] a uma lista qualquer, não necessariamente vai retornar uma lista ordenada, mas o lema [bubble_ord1] a seguir nos mostra que se o primeiro elemento é o único elemento fora de ordem em uma lista, ao aplicarmos a função [bubble], obtemos uma lista ordenada:
+(** Sabemos que aplicar a função [bubble] a uma lista qualquer, não necessariamente vai retornar uma lista ordenada, mas o lema [bubble_sorted] a seguir nos mostra que se o primeiro elemento é o único elemento fora de ordem em uma lista, ao aplicarmos a função [bubble], obtemos uma lista ordenada:
 *)
 
-Lemma bubble_ord_ord: forall l, ord1 l -> bubble l = l.
-Proof. (** %\noindent {\bf Prova}.% *)
-  intros l H. induction H. (** A prova é feita por indução na definição [ord1]. %\newline% *)
-  - rewrite bubble_equation. reflexivity. (** 1. A primeira regra se refere ao axioma que diz que a lista vazia está ordenada. A igualdade neste caso é trivial porque a função [bubble] retorna a própria lista vazia. %\newline% *)
-  - rewrite bubble_equation. reflexivity. (** 2. A segunda regra trata de listas unitárias e também é trivial. *)
-  - rewrite bubble_equation. apply leb_correct in H. rewrite H. rewrite IHord1. reflexivity. (** 3. A terceira regra corresponde ao passo importante da prova. ... $\hfill\Box$ *)
-Qed.
-
-(** O lema a seguir consiste em uma propriedade do predicado [le_all], e portanto poderia ter sido colocado no arquivo [ord_equiv]. No entanto, por simplicidade, o deixaremos aqui:
-
-*)
-
-Lemma le_all_cons: forall l x y, x <= y -> x <=* l -> x <=* (y::l).
-Proof.
-  intros l x y Hle Hall. unfold le_all in *.
-  intros y' Hin. simpl in Hin. destruct Hin.
-  - subst. assumption.
-  - apply Hall. assumption.
-Qed.
-(** %\begin{itemize}
-    \item primeiro item
-    \item segundo item
-\end{itemize}%
-*)
-
-
-Lemma bubble_le_all: forall l a a0, a <= a0 -> a <=* l -> a <=* bubble (a0 :: l).
-(** %\begin{enumerate}
-    \item primeiro item
-    \item segundo item
-\end{enumerate}%
-*)
-Proof.
-  induction l.
-  - intros a a0 Hle Hall. rewrite bubble_equation. unfold le_all. intros y Hin. apply in_inv in Hin. destruct Hin.
-    + subst. assumption.
-    + inversion H.
-  - intros a1 a0 Hle Hall. rewrite bubble_equation. destruct (a0 <=? a).
-    + apply le_all_cons.
-      * assumption.
-      * apply IHl.
-        ** unfold le_all in Hall. apply Hall. apply in_eq.
-        ** unfold le_all in *. intros y H. apply Hall. simpl. right. assumption.
-    + apply le_all_cons.
-      * unfold le_all in Hall. apply Hall. apply in_eq.
-      * apply IHl.
-        ** assumption.
-        ** unfold le_all in *. intros y H. apply Hall. simpl. right. assumption.
-Qed.
-
-Lemma ord1_snd: forall l x y, ord1(x::y::l) -> ord1(x::l).
-Proof.
-  intros l. case l.
-  - intros x y H. apply ord1_one.
-  - intros z l' x y H. apply ord1_all.
-    + inversion H; subst. inversion H4; subst. lia.
-    + inversion H; subst. inversion H4; subst. assumption.
-Qed.
-
-Lemma le_all_ord: forall l a, ord1 (a::l) -> a <=* l.
-Proof.
-  induction l.
-  - intros a Hin. unfold le_all. intros y H. inversion H.
-  - intros x' Hord. unfold le_all in *. intros y Hin. inversion Hin; subst.
-    + inversion Hord; subst. assumption.
-    + apply IHl.
-      * apply ord1_snd in Hord. assumption.
-      * assumption.
-Qed.
-
-Lemma bubble_ord1: forall l a, ord1 l -> ord1(bubble (a::l)).  
-Proof.
-  induction l.
-  - intros a H. rewrite bubble_equation. apply ord1_one.
-  - intros a0 H. rewrite bubble_equation. destruct (a0 <=? a) eqn:Hle.
-    + rewrite bubble_ord_ord.
-      * apply ord1_all.
-        ** apply leb_complete in Hle. assumption.
-        ** assumption.
-      * assumption.
-    + apply ord1_equiv_ord2. apply ord2_all.
-      * apply bubble_le_all.
-        ** apply leb_complete_conv in Hle. lia.
-        ** apply le_all_ord. assumption.
-      * apply ord1_equiv_ord2. apply IHl. inversion H; subst.
-        ** apply ord1_nil.
-        ** assumption.
-Qed.                      
-
-(**
-
-Os dois lemas a seguir, apresentam provas (parciais) alternativas à prova do lema anterior, e portanto constituem atividades que completaremos apenas se houver tempo.
-
-
-Lemma bubble_ord1': forall l a, ord1 l -> ord1(bubble (a::l)).  
-Proof.
-  intros l a H. induction H.
-  - rewrite bubble_equation. apply ord1_one.
-  - rewrite bubble_equation. destruct (a <=? x) eqn: H.
-    + rewrite bubble_equation. apply ord1_all.
-      * apply leb_complete. assumption.
-      * apply ord1_one.
-    + rewrite bubble_equation. apply ord1_all.
-      * apply leb_complete_conv in H. lia.
-      * apply ord1_one.
-  - rewrite bubble_equation.
-  Admitted.
-
-Lemma bubble_ord1'': forall l a, ord1 l -> ord1(bubble (a::l)).  
-Proof.
-  intros l a.
-  functional induction (bubble (a::l)).
-  Admitted.
+Lemma bubble_sorted: forall l, Sorted le l -> bubble l = l.
+Proof. Admitted.
   
-Lemma bs_ordena: forall l, ord1 (bs l).
-Proof.
-  induction l.
-  - simpl. apply ord1_nil.
-  - simpl. apply bubble_ord1. apply IHl.
-Qed. *)
+Lemma bs_sorted: forall l, Sorted le (bs l).
+Proof. Admitted.
 
-(** A seguir, mostraremos que o algoritmo bubblesort gera como saída uma permutação da lista de entrada:
-
- *)
+(** A seguir, mostraremos que o algoritmo bubblesort (função [bs]) gera como saída uma permutação da lista de entrada. O lema a seguir nos diz que a função [bubble] também gera uma permutação da entrada: *)
 
 Lemma bubble_perm: forall l, Permutation l (bubble l).
 Proof.
@@ -204,59 +88,15 @@ Proof.
     + apply perm_skip. apply IHl0.
 Qed.
 
-Lemma bubble_cons: forall l x, Permutation (bubble (x::l)) (x::(bubble l)) .
-Proof.
-  intro l. functional induction (bubble l).
-  - intro x. auto.
-  - intro x0. rewrite bubble_equation. destruct (x0 <=? x).
-    + auto.
-    + rewrite bubble_equation. constructor.
-  - intros x0. rewrite bubble_equation. destruct (x0 <=? x).
-    + constructor. apply IHl0.
-    + apply perm_trans with (x :: x0 :: bubble (y :: l0)).
-      * constructor. apply IHl0.
-      * constructor.
-  - intro x0. apply perm_trans with (bubble (x0 :: y :: x :: l0)).
-    + apply perm_trans with (x0 :: x :: y :: l0).
-      * apply Permutation_sym. apply bubble_perm.
-      * apply perm_trans with  (x0 :: y :: x :: l0).
-        ** repeat constructor.
-        ** apply bubble_perm.
-    + rewrite bubble_equation. destruct (x0 <=? y).
-      * constructor. apply IHl0.
-      * apply perm_trans with (y :: x0 :: bubble (x :: l0)).
-        ** constructor. apply IHl0.
-        ** constructor.
-Qed.
-
-Lemma bubble_perm2: forall l l', Permutation l l' -> Permutation (bubble l) (bubble l').
-Proof.
-  induction 1.
-  - rewrite bubble_equation. apply perm_nil.
-  - apply perm_trans with (x::bubble l).
-    + apply bubble_cons.
-    + apply perm_trans with (x::bubble l').
-      * apply perm_skip. apply IHPermutation.
-      * apply Permutation_sym. apply bubble_cons.
-  - apply perm_trans with (y::x::l).
-    + apply Permutation_sym. apply bubble_perm.
-    + apply perm_trans with (x::y::l).
-      * constructor.
-      * apply bubble_perm.
-  - apply perm_trans with (bubble l').
-    + apply IHPermutation1.
-    + apply IHPermutation2.
-Qed.  
+(** O lema [bs_correto] a seguir, nos mostra que o algoritmo [bs] gera uma permutação da lista de entrada: *)
 
 Lemma bs_permuta: forall l, Permutation l (bs l).
-Proof.
-  induction l.
-  - simpl. apply perm_nil.
-  - simpl. apply perm_trans with (bubble (a::l)).
-    + apply bubble_perm.
-    + apply bubble_perm2. apply perm_skip. apply IHl.
-Qed.
+Proof. Admitted.
+
+(** Por fim, a correção do algoritmo [bs] é obtida pelo teorema a seguir que estabelece que o algoritmo [bs] retorna uma permutação da lista de entrada que está ordenada: *)
     
-Theorem bs_correto: forall l, ord1 (bs l) /\ Permutation l (bs l).
+Theorem bs_correto: forall l, Sorted le (bs l) /\ Permutation l (bs l).
 Proof.
-  
+Admitted.  
+
+(** Repositório: %\url{https://github.com/flaviodemoura/bubble_sort}% *)

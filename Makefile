@@ -13,7 +13,7 @@ COQC = coqc
 COQDEP = coqdep
 COQDOC = coqdoc
 
-MODULES	:= ord_equiv perm_equiv bubble_sort
+MODULES	:= bubble_sort
 TEX	:= $(MODULES:%=latex/%.v.tex)
 
 ## Library name used for the imports in Coq
@@ -60,5 +60,5 @@ latex/relatorio.pdf: latex/relatorio.tex $(TEX)
 	cd latex ; pdflatex relatorio ; pdflatex relatorio ; pdflatex relatorio
 
 pdf:
-	okular latex/relatorio.pdf&
+	evince latex/relatorio.pdf&
 
