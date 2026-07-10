@@ -134,7 +134,33 @@ Qed.
 (** O lema [bs_correto] a seguir, nos mostra que o algoritmo [bs] gera uma permutação da lista de entrada: *)
 
 Lemma bs_permuta: forall l, Permutation l (bs l).
-Proof. Admitted.
+Proof.
+  induction l as [| h l' IHl'].
+  - (* CASO nil: bs nil = nil
+       Goal: Permutation nil (bs nil), que reduz a Permutation nil nil *)
+    simpl.
+    apply perm_nil.
+
+  - (* CASO h::l'
+       IHl' : Permutation l' (bs l')
+       Goal: Permutation (h::l') (bs (h::l'))
+       Como bs (h::l') = bubble (h :: bs l'), simplificamos primeiro *)
+    simpl.
+    (* Agora o goal é: Permutation (h::l') (bubble (h :: bs l')) *)
+
+    apply perm_trans with (l' := h :: bs l').
+    (* Quebra em duas premissas de perm_trans:
+       1) Permutation (h::l') (h :: bs l')
+       2) Permutation (h :: bs l') (bubble (h :: bs l')) *)
+
+    + (* Premissa 1: mesma cabeça h dos dois lados, resto por IHl' *)
+      apply perm_skip.
+      apply IHl'.
+
+    + (* Premissa 2: exatamente o que bubble_perm garante,
+         instanciado na lista (h :: bs l') *)
+      apply bubble_perm.
+Qed.
 
 (** Por fim, a correção do algoritmo [bs] é obtida pelo teorema a seguir que estabelece que o algoritmo [bs] retorna uma permutação da lista de entrada que está ordenada: *)
     
