@@ -77,7 +77,59 @@ Proof. Admitted.
 
 Lemma bubble_perm: forall l, Permutation l (bubble l).
 Proof.
-  intro l. functional induction (bubble l). Admitted.
+  intro l.
+  (* Introduz a variável l do forall no contexto. 
+     Agora l é uma lista concreta (arbitrária, mas fixa),
+     e o goal vira: Permutation l (bubble l) *)
+
+  functional induction (bubble l).
+  (* Usa o princípio de indução gerado automaticamente pelo Function
+     que definiu bubble. Isso quebra a prova em 4 casos (subgoals),
+     um para cada "ramo" da definição de bubble (nil / x::nil /
+     x::y::l0 com x<=?y=true / x::y::l0 com x<=?y=false).
+     Nos casos recursivos, o Coq já injeta no contexto a hipótese
+     de indução correspondente à chamada recursiva. *)
+
+  - (* CASO 1: l = nil
+       Goal: Permutation nil nil *)
+    apply perm_nil.
+    (* perm_nil é o construtor que prova diretamente que nil é
+       permutação de nil. Fecha o goal sem deixar nada pendente. *)
+
+  - (* CASO 2: l = x::nil
+       Goal: Permutation (x::nil) (x::nil) *)
+    apply perm_skip.
+    (* perm_skip: forall x l l', Permutation l l' -> Permutation (x::l) (x::l').
+       Como os dois lados começam com o mesmo x, o Coq casa esse
+       padrão e troca o goal por sua premissa: Permutation nil nil *)
+    apply perm_nil.
+    (* Agora o goal é Permutation nil nil, resolvido igual ao caso 1. *)
+
+  - (* CASO 3: l = x::y::l0, com (x <=? y) = true
+       Contexto tem: IHl0 : Permutation (y::l0) (bubble (y::l0))
+       Goal: Permutation (x::y::l0) (x::bubble (y::l0)) *)
+    apply perm_skip.
+    (* Os dois lados do goal começam com o mesmo x.
+       perm_skip "descasca" esse x dos dois lados.
+       Novo goal: Permutation (y::l0) (bubble (y::l0)) *)
+    apply IHl0.
+    (* Esse novo goal é EXATAMENTE a hipótese de indução IHl0
+       que já estava no contexto (foi gerada pelo functional induction
+       para a chamada recursiva bubble (y::l0)).
+       Não precisamos provar nada do zero: só reaproveitar IHl0. *)
+
+  - (* CASO 4: l = x::y::l0, com (x <=? y) = false
+       Contexto tem: IHl0 : Permutation (x::l0) (bubble (x::l0))
+       Goal: Permutation (x::y::l0) (y::bubble (x::l0))
+       Este caso é mais complexo porque a "cabeça" muda de x para y,
+       então perm_skip sozinho não serve.*)
+    apply perm_trans with (l' := y :: x :: l0).
+    + (* subgoal 1: Permutation (x::y::l0) (y::x::l0) *)
+      apply perm_swap.
+    + (* subgoal 2: Permutation (y::x::l0) (y::bubble(x::l0)) *)
+      apply perm_skip.
+      apply IHl0.
+Admitted.
 
 (** O lema [bs_correto] a seguir, nos mostra que o algoritmo [bs] gera uma permutação da lista de entrada: *)
 
@@ -89,5 +141,8 @@ Proof. Admitted.
 Theorem bs_correto: forall l, Sorted le (bs l) /\ Permutation l (bs l).
 Proof.
 Admitted.  
+
+Check bubble_equation.
+Check bubble_ind.
 
 (** Repositório: %\url{https://github.com/flaviodemoura/bubble_sort}% *)
