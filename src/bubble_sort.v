@@ -129,7 +129,7 @@ Proof.
     + (* subgoal 2: Permutation (y::x::l0) (y::bubble(x::l0)) *)
       apply perm_skip.
       apply IHl0.
-Admitted.
+Qed.
 
 (** O lema [bs_correto] a seguir, nos mostra que o algoritmo [bs] gera uma permutação da lista de entrada: *)
 
