@@ -69,9 +69,132 @@ Eval compute in (bs (3 :: 2 :: 1::nil)).
 
 Lemma bubble_sorted: forall l, Sorted le l -> bubble l = l.
 Proof. Admitted.
-  
+
+Definition le_all (x:nat) (l:list nat) :=
+  forall y, In y l -> x <= y.
+
+Lemma sorted_cons_from_le_all:
+  forall x l, Sorted le l -> le_all x l -> Sorted le (x::l).
+Proof.
+  intros x l Hsort Hall.
+  constructor.
+  - exact Hsort.
+  - destruct l as [| y l'].
+    + constructor.
+    + constructor.
+      apply Hall.
+      simpl; auto.
+Qed.
+
+Lemma sorted_head_le_all:
+  forall x l, Sorted le (x::l) -> le_all x l.
+Proof.
+  intros x l.
+  revert x.
+  induction l as [| y ys IH]; intros x Hsort z Hin.
+  - inversion Hin.
+  - inversion Hsort as [| ? ? Htail Hhd]; subst.
+    simpl in Hin.
+    destruct Hin as [Hz | Hin].
+    + subst.
+      inversion Hhd; subst.
+      assumption.
+    + inversion Hhd; subst.
+      specialize (IH y Htail z Hin).
+      lia.
+Qed.
+
+Lemma le_all_bubble:
+  forall a l, le_all a l -> le_all a (bubble l).
+Proof.
+  intros a l.
+  functional induction (bubble l); intros Hall z Hz; simpl in *.
+  - contradiction.
+  - destruct Hz as [Hz | Hz].
+    + subst.
+      apply Hall.
+      simpl; auto.
+    + contradiction.
+  - destruct Hz as [Hz | Hz].
+    + subst.
+      apply Hall.
+      simpl; auto.
+    + apply IHl0.
+      * intros w Hw.
+        apply Hall.
+        simpl.
+        right.
+        exact Hw.
+      * exact Hz.
+  - destruct Hz as [Hz | Hz].
+    + subst.
+      apply Hall.
+      simpl; auto.
+    + apply IHl0.
+      * intros w Hw.
+        apply Hall.
+        simpl.
+        destruct Hw as [Hw | Hw].
+        -- subst.
+           left.
+           reflexivity.
+        -- right.
+           right.
+           exact Hw.
+      * exact Hz.
+Qed.
+
+Lemma bubble_cons_sorted:
+  forall x l, Sorted le l -> Sorted le (bubble (x::l)).
+Proof.
+  intros x l Hsort.
+  revert x Hsort.
+  induction l as [| y ys IH]; intros x Hsort.
+  - rewrite (bubble_equation (x::nil)).
+    constructor.
+    + constructor.
+    + constructor.
+  - assert (Hyall : le_all y ys).
+    { apply sorted_head_le_all. exact Hsort. }
+    inversion Hsort as [| ? ? Htail Hhd]; subst.
+    rewrite (bubble_equation (x::y::ys)).
+    destruct (x <=? y) eqn:Hxy.
+    + apply Nat.leb_le in Hxy.
+      apply sorted_cons_from_le_all.
+      * apply IH.
+        exact Htail.
+      * apply le_all_bubble.
+        intros z Hz.
+        simpl in Hz.
+        destruct Hz as [Hz | Hz].
+        -- subst.
+           exact Hxy.
+        -- specialize (Hyall z Hz).
+           lia.
+    + apply Nat.leb_gt in Hxy.
+      apply sorted_cons_from_le_all.
+      * apply IH.
+        exact Htail.
+      * apply le_all_bubble.
+        intros z Hz.
+        simpl in Hz.
+        destruct Hz as [Hz | Hz].
+        -- subst.
+           lia.
+        -- apply Hyall.
+           exact Hz.
+Qed.
+
 Lemma bs_sorted: forall l, Sorted le (bs l).
-Proof. Admitted.
+Proof.
+  intro l.
+  induction l as [| h l' IHl'].
+  - simpl.
+    constructor.
+  - simpl.
+    apply bubble_cons_sorted.
+    exact IHl'.
+Qed.
 
 (** A seguir, mostraremos que o algoritmo bubblesort (função [bs]) gera como saída uma permutação da lista de entrada. O lema a seguir nos diz que a função [bubble] também gera uma permutação da entrada: *)
 
