@@ -304,9 +304,10 @@ Qed.
     
 Theorem bs_correto: forall l, Sorted le (bs l) /\ Permutation l (bs l).
 Proof.
-Admitted.  
-
-Check bubble_equation.
-Check bubble_ind.
+  intro l.
+  split.
+  - apply bs_sorted.
+  - apply bs_permuta.
+Qed.
 
 (** Repositório: %\url{https://github.com/flaviodemoura/bubble_sort}% *)
