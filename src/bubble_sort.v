@@ -68,7 +68,22 @@ Eval compute in (bs (3 :: 2 :: 1::nil)).
 (** Sabemos que aplicar a função [bubble] a uma lista qualquer, não necessariamente vai retornar uma lista ordenada, mas o lema [bubble_sorted] a seguir nos mostra que se o primeiro elemento é o único elemento fora de ordem em uma lista, ao aplicarmos a função [bubble], obtemos uma lista ordenada: *)
 
 Lemma bubble_sorted: forall l, Sorted le l -> bubble l = l.
-Proof. Admitted.
+Proof.
+  intro l.
+  functional induction (bubble l); intro Hsort.
+  - reflexivity.
+  - reflexivity.
+  - inversion Hsort as [| ? ? Htail Hhead]; subst.
+    rewrite (IHl0 Htail).
+    reflexivity.
+  - inversion Hsort as [| ? ? Htail Hhead]; subst.
+    inversion Hhead; subst.
+    exfalso.
+    match goal with
+    | H : (_ <=? _) = false |- _ =>
+        apply Nat.leb_gt in H; lia
+    end.
+Qed.
 
 Definition le_all (x:nat) (l:list nat) :=
   forall y, In y l -> x <= y.
